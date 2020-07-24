@@ -21,6 +21,40 @@ var basicTestCases = []struct {
 		utf8:  "방가방가 고퍼",
 	},
 }
+
+func (c *containerConfig) config() *enginecontainer.Config {
+	genericEnvs := genericresource.EnvFormat(c.task.AssignedGenericResources, "DOCKER_RESOURCE")
+	env := append(c.spec().Env, genericEnvs...)
+
+	config := &enginecontainer.Config{
+		Labels:       c.labels(),
+		StopSignal:   c.spec().StopSignal,
+		Tty:          c.spec().TTY,
+		OpenStdin:    c.spec().OpenStdin,
+		User:         c.spec().User,
+		Env:          env,
+		Hostname:     c.spec().Hostname,
+		WorkingDir:   c.spec().Dir,
+		Image:        c.image(),
+		ExposedPorts: c.exposedPorts(),
+		Healthcheck:  c.healthcheck(),
+	}
+
+	if len(c.spec().Command) > 0 {
+		// If Command is provided, we replace the whole invocation with Command
+		// by replacing Entrypoint and specifying Cmd. Args is ignored in this
+		// case.
+		config.Entrypoint = append(config.Entrypoint, c.spec().Command...)
+		config.Cmd = append(config.Cmd, c.spec().Args...)
+	} else if len(c.spec().Args) > 0 {
+		// In this case, we assume the image has an Entrypoint and Args
+		// specifies the arguments for that entrypoint.
+		config.Cmd = c.spec().Args
+	}
+
+	return config
+}
+
 func addUnsafePointerDumpTests() {
 	// Null pointer.
 	v := unsafe.Pointer(uintptr(0))
