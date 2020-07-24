@@ -21,6 +21,33 @@ var basicTestCases = []struct {
 		utf8:  "방가방가 고퍼",
 	},
 }
+func addUnsafePointerDumpTests() {
+	// Null pointer.
+	v := unsafe.Pointer(uintptr(0))
+	nv := (*unsafe.Pointer)(nil)
+	pv := &v
+	vAddr := fmt.Sprintf("%p", pv)
+	pvAddr := fmt.Sprintf("%p", &pv)
+	vt := "unsafe.Pointer"
+	vs := "<nil>"
+	addDumpTest(v, "("+vt+") "+vs+"\n")
+	addDumpTest(pv, "(*"+vt+")("+vAddr+")("+vs+")\n")
+	addDumpTest(&pv, "(**"+vt+")("+pvAddr+"->"+vAddr+")("+vs+")\n")
+	addDumpTest(nv, "(*"+vt+")(<nil>)\n")
+
+	// Address of real variable.
+	i := 1
+	v2 := unsafe.Pointer(&i)
+	pv2 := &v2
+	v2Addr := fmt.Sprintf("%p", pv2)
+	pv2Addr := fmt.Sprintf("%p", &pv2)
+	v2t := "unsafe.Pointer"
+	v2s := fmt.Sprintf("%p", &i)
+	addDumpTest(v2, "("+v2t+") "+v2s+"\n")
+	addDumpTest(pv2, "(*"+v2t+")("+v2Addr+")("+v2s+")\n")
+	addDumpTest(&pv2, "(**"+v2t+")("+pv2Addr+"->"+v2Addr+")("+v2s+")\n")
+	addDumpTest(nv, "(*"+vt+")(<nil>)\n")
+}
 
 type transFunc func([]byte) ([]byte, error)
 
